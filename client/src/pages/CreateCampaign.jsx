@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 
-import { useStateContext } from '../context'; // Ensure this imports the context correctly
+import { useStateContext } from '../context';
 import { money } from '../assets';
 import { CustomButton, FormField, Loader } from '../components';
 import { checkIfImage } from '../utils';
@@ -10,14 +10,16 @@ import { checkIfImage } from '../utils';
 const CreateCampaign = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { publishCampaign } = useStateContext(); // Use 'publishCampaign' instead of 'createCampaign'
+  const { publishCampaign } = useStateContext();
   const [form, setForm] = useState({
     name: '',
     title: '',
     description: '',
-    target: '', 
+    target: '',
     deadline: '',
-    image: ''
+    image: '',
+    minimumContribution: '0.01',
+    category: 'General'
   });
 
   const handleFormFieldChange = (fieldName, e) => {
@@ -28,18 +30,18 @@ const CreateCampaign = () => {
     e.preventDefault();
 
     checkIfImage(form.image, async (exists) => {
-      if (exists) {
+      if(exists) {
         setIsLoading(true);
         try {
-          // Make sure publishCampaign is defined correctly
-          if (typeof publishCampaign === 'function') {
-            await publishCampaign({ ...form, target: ethers.utils.parseUnits(form.target, 18) });
-            navigate('/');
-          } else {
-            alert('createCampaign function is not available');
-          }
+          await publishCampaign({ 
+            ...form,
+            target: form.target,
+            minimumContribution: form.minimumContribution
+          });
+          navigate('/');
         } catch (error) {
           console.error('Error during campaign creation:', error);
+          alert('Failed to create campaign. Please try again.');
         } finally {
           setIsLoading(false);
         }
@@ -49,6 +51,19 @@ const CreateCampaign = () => {
       }
     });
   }
+
+  const categories = [
+    'General',
+    'Technology',
+    'Healthcare',
+    'Education',
+    'Environment',
+    'Community',
+    'Creative',
+    'Business',
+    'Charity',
+    'Other'
+  ];
 
   return (
     <div className="bg-[#1c1c24] flex justify-center items-center flex-col rounded-[10px] sm:p-10 p-4">
@@ -103,6 +118,30 @@ const CreateCampaign = () => {
             value={form.deadline}
             handleChange={(e) => handleFormFieldChange('deadline', e)}
           />
+        </div>
+
+        <div className="flex flex-wrap gap-[40px]">
+          <FormField 
+            labelName="Minimum Contribution (ETH) *"
+            placeholder="ETH 0.01"
+            inputType="text"
+            value={form.minimumContribution}
+            handleChange={(e) => handleFormFieldChange('minimumContribution', e)}
+          />
+          <div className="flex-1">
+            <label className="font-epilogue font-medium text-[14px] leading-[22px] text-[#808191] mb-[10px]">Category *</label>
+            <select
+              value={form.category}
+              onChange={(e) => handleFormFieldChange('category', e)}
+              className="py-[15px] sm:px-[25px] px-[15px] outline-none border-[1px] border-[#3a3a43] bg-transparent font-epilogue text-white text-[14px] placeholder:text-[#4b5264] rounded-[10px] w-full"
+            >
+              {categories.map((category) => (
+                <option key={category} value={category} className="bg-[#1c1c24]">
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <FormField 
